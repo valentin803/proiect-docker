@@ -1,0 +1,24 @@
+services:
+  flask-app:
+    build: .
+    container_name: flask-app
+    volumes:
+      - .:/app
+    networks:
+      - lab-network
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx-proxy
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8080:80"
+    depends_on:
+      - flask-app
+    networks:
+      - lab-network
+
+networks:
+  lab-network:
+    driver: bridge
