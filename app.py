@@ -10,8 +10,9 @@ def home():
 def health():
     return jsonify(status="healthy")
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
-    @app.route('/about')
+@app.route('/about')
 def about():
     return "Aceasta este pagina About!"
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
