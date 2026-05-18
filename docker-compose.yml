@@ -1,24 +1,43 @@
+# Definim serviciile (containerele) care vor rula în aplicația noastră
 services:
+
+  # 1. Serviciul pentru aplicația Python Flask
   flask-app:
+    # Îi spunem lui Docker să construiască imaginea local, folosind Dockerfile-ul din folderul curent (.)
     build: .
+    # Numele containerului când va rula (Atenție: se șterge dacă vrei să testezi scalarea!)
     container_name: flask-app
+    # Volume: Conectează folderul curent din mașina virtuală cu folderul /app din container
+    # Astfel, modificările de cod se văd instant fără să reconstruim imaginea
     volumes:
       - .:/app
+    # Conectează containerul Flask la rețeaua izolată 'lab-network'
     networks:
       - lab-network
 
+  # 2. Serviciul pentru serverul Nginx (Reverse Proxy)
   nginx:
+    # Descarcă imaginea oficială și stabilă de Nginx de pe Docker Hub
     image: nginx:latest
+    # Numele containerului pentru serverul proxy
     container_name: nginx-proxy
+    # Trimite fișierul nostru local de configurare în interiorul Nginx, ca fiind doar de citire (:ro)
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    # Mapare Porturi (Port Public : Port Intern)
+    # Deschide portul 8080 pe calculatorul nostru pentru a accesa portul 80 din container
     ports:
       - "8080:80"
+    # Îi spune lui Docker că Nginx depinde de Flask. Pornește Flask-ul primul!
     depends_on:
       - flask-app
+    # Conectează Nginx la aceeași rețea izolată pentru a putea comunica cu containerul Flask
     networks:
       - lab-network
 
+# Configurarea rețelelor globale din proiect
 networks:
+  # Definim numele rețelei noastre
   lab-network:
+    # Driver-ul 'bridge' creează o rețea virtuală privată pe calculatorul gazdă
     driver: bridge
