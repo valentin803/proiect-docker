@@ -1,33 +1,55 @@
-# Importăm modulele necesare din librăria Flask și sistemul de operare (os)
-# Flask - clasa principală pentru aplicația web
-# jsonify - funcție care transformă dicționarele Python în format JSON
+# Importăm request pe lângă Flask și jsonify pentru a putea citi datele trimise din formular
 import os
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 
-# Inițializăm aplicația Flask
 app = Flask(__name__)
 
-# RUTA 1: Pagina principală (Root endpoint)
-@app.route('/')
+# RUTA 1: Pagina principală modificată să accepte și afișeze un formular text
+# methods=['GET', 'POST'] înseamnă: 
+# GET - când omul doar intră pe pagină (îi arătăm formularul)
+# POST - când omul apasă pe butonul "Trimite" (citim ce a scris)
+@app.route('/', methods=['GET', 'POST'])
 def home():
-    # CHALLENGE 2: Citim variabila de mediu APP_ENV setată în docker-compose.yml
-    # Dacă nu este configurată în sistem, va folosi valoarea implicită 'unknown'
     mediu = os.getenv('APP_ENV', 'unknown')
-    return f"Salut! Aplicatia ruleaza in mediul de: {mediu}!"
+    mesaj_primit = ""
 
-# RUTA 2: Endpoint-ul de Health Check (Verificare tehnică)
+    # Dacă utilizatorul a completat textul și a apăsat butonul:
+    if request.method == 'POST':
+        # Citim textul din căsuța care are numele (name) "text_utilizator"
+        text_transmis = request.form.get('text_utilizator', '')
+        mesaj_primit = f"<div style='color: green; margin-top: 10px;'><b>Serverul a primit textul:</b> {text_transmis}</div>"
+
+    # Formularul HTML scris direct în cod (ușor de citit și testat)
+    html_formular = f"""
+    <html>
+        <head><title>Formular Flask</title></head>
+        <body style="font-family: Arial, sans-serif; margin: 40px;">
+            <h2>Salut! Aplicatia ruleaza in mediul de: {mediu}!</h2>
+            
+            <fieldset style="padding: 20px; border-radius: 8px; border: 1px solid #ccc; max-width: 400px;">
+                <legend><b>Adauga un text mai jos:</b></legend>
+                <form method="POST" action="/">
+                    <input type="text" name="text_utilizator" placeholder="Scrie ceva aici..." required style="padding: 8px; width: 250px;">
+                    <button type="submit" style="padding: 8px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Trimite</button>
+                </form>
+                {mesaj_primit}
+            </fieldset>
+            
+            <p><a href="/about">Mergi la pagina About</a></p>
+        </body>
+    </html>
+    """
+    return html_formular
+
+# RUTA 2: Endpoint-ul de Health Check
 @app.route('/health')
 def health():
-    # Returnează un răspuns structurat JSON citit automat de unelte DevOps
     return jsonify(status="healthy")
 
-# RUTA 3: Pagina Despre (Adăugată în Part 7)
+# RUTA 3: Pagina Despre
 @app.route('/about')
 def about():
     return "Aceasta este pagina About a proiectului Docker!"
 
-# Blocul principal care asigură pornirea serverului
 if __name__ == '__main__':
-    # host='0.0.0.0' - Obligatoriu în Docker! Permite aplicației să accepte conexiuni din afara ei (de la Nginx)
-    # port=5000      - Portul intern pe care ascultă această aplicație în rețeaua Docker
     app.run(host='0.0.0.0', port=5000)
